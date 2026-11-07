@@ -1,5 +1,5 @@
 
-name: Niconico User Video Collector
+name: Niconico Video Collector
 
 on:
   workflow_dispatch:
@@ -28,24 +28,36 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install yt-dlp
+        run: |
+          python -m pip install --upgrade yt-dlp
+
       - name: Collect videos
         env:
           USER_ID: ${{ inputs.user_id || vars.NICONICO_USER_ID }}
         run: |
           if [ -z "$USER_ID" ]; then
-            echo "User ID is not configured."
+            echo "::error::User ID is missing"
             exit 1
           fi
 
           python scripts/get_videos.py \
             --user-id "$USER_ID" \
-            --page-size 100 \
             --output videos.txt
 
-      - name: Upload video URLs
+      - name: Check output
+        run: |
+          test -s videos.txt || {
+            echo "::error::Video list is empty"
+            exit 1
+          }
+
+          echo "Collected videos:"
+          wc -l videos.txt
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: niconico-video-urls
           path: videos.txt
-          if-no-files-found: error
           retention-days: 30
