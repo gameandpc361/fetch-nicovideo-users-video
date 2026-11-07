@@ -23,7 +23,6 @@ def fetch_page(user_id, page, page_size=100):
     "sortOrder": "desc",
     "pageSize": page_size,
     "page": page,
-    "sensitiveContents": "include",
 }
 
     url = API_URL.format(user_id) + "?" + urllib.parse.urlencode(params)
