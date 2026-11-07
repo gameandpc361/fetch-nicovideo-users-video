@@ -32,6 +32,59 @@ jobs:
         with:
           python-version: "3.12"
 
+      
+      - name: Install OpenVPN
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openvpn curl
+
+      - name: Connect VPN Gate
+        env:
+          VPN_CONFIG: ${{ secrets.VPN_CONFIG }}
+        run: |
+          set -e
+
+          printf '%s' "$VPN_CONFIG" > /tmp/vpngate.ovpn
+
+          printf 'vpn\nvpn\n' > /tmp/vpn-auth.txt
+          chmod 600 /tmp/vpn-auth.txt
+
+          sudo openvpn \
+            --config /tmp/vpngate.ovpn \
+            --auth-user-pass /tmp/vpn-auth.txt \
+            --auth-nocache \
+            --daemon \
+            --writepid /tmp/openvpn.pid \
+            --log /tmp/openvpn.log
+
+          CONNECTED=0
+
+          for i in $(seq 1 45); do
+            if curl -4 -fsS --max-time 5 \
+              https://ipinfo.io/country | grep -qx JP; then
+              CONNECTED=1
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$CONNECTED" -ne 1 ]; then
+            sudo tail -n 60 /tmp/openvpn.log
+            echo "::error::VPN connection failed"
+            exit 1
+          fi
+
+          echo "VPN connected successfully."
+
+      - name: Verify VPN
+        run: |
+          echo "Country:"
+          curl -4 -fsS https://ipinfo.io/country
+
+          echo "Public IP:"
+          curl -4 -fsS https://api.ipify.org
+          echo
+
       - name: Collect videos
         env:
           USER_ID: ${{ inputs.user_id || vars.NICONICO_USER_ID }}
