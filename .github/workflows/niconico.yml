@@ -9,9 +9,6 @@ on:
         required: true
         type: string
 
-  schedule:
-    - cron: "0 21 * * *"
-
 permissions:
   contents: read
 
