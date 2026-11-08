@@ -93,16 +93,16 @@ jobs:
 
           python scripts/get_videos.py \
             --user-id "$USER_ID" \
-            --output videos.txt
+            --output videos_"$USER_ID".txt
 
       - name: Verify output
         run: |
           test -s videos.txt || exit 1
-          echo "Collected: $(wc -l < videos.txt) videos"
+          echo "Collected: $(wc -l < videos_${{ inputs.user_id }}.txt) videos"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: niconico-video-urls
-          path: videos.txt
+          path: videos_${{ inputs.user_id }}.txt
           retention-days: 30
