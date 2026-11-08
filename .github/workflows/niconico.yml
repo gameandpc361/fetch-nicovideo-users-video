@@ -24,10 +24,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
 
       
       - name: Install OpenVPN
@@ -96,13 +92,17 @@ jobs:
             --output videos_"$USER_ID".txt
 
       - name: Verify output
+        env:
+          USER_ID: ${{ inputs.user_id || vars.NICONICO_USER_ID }}
         run: |
           test -s videos.txt || exit 1
-          echo "Collected: $(wc -l < videos_${{ inputs.user_id }}.txt) videos"
+          echo "Collected: $(wc -l < videos_"$USER_ID".txt) videos"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
+        env:
+          USER_ID: ${{ inputs.user_id || vars.NICONICO_USER_ID }}
         with:
           name: niconico-video-urls
-          path: videos_${{ inputs.user_id }}.txt
+          path: videos_"$USER_ID".txt
           retention-days: 30
